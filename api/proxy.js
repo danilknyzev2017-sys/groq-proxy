@@ -1,21 +1,22 @@
 export const config = {
   api: {
-    bodyParser: false, // Отключаем парсинг, чтобы передать аудио-байты без изменений
+    bodyParser: false,
   },
 };
 
 export default async function handler(req, res) {
-  const targetUrl = "https://api.groq.com" + req.url;
+  // Формируем точный URL без лишних редиректов
+  const targetUrl = `https://api.groq.com${req.url}`;
   
-  // Собираем тело запроса в буфер
   const chunks = [];
   for await (const chunk of req) {
     chunks.push(chunk);
   }
   const body = Buffer.concat(chunks);
 
-  const headers = { ...req.headers };
-  delete headers.host; // Удаляем host, чтобы Groq принял запрос
+  const headers = {};
+  if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
+  if (req.headers['authorization']) headers['authorization'] = req.headers['authorization'];
 
   try {
     const response = await fetch(targetUrl, {
