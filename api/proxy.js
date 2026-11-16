@@ -1,33 +1,40 @@
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: false, // Отключаем парсер, чтобы аудиофайл (multipart) проходил без искажений
   },
 };
 
 export default async function handler(req, res) {
-  // Формируем точный URL без лишних редиректов
-  const targetUrl = `https://api.groq.com${req.url}`;
-  
-  const chunks = [];
-  for await (const chunk of req) {
-    chunks.push(chunk);
+  if (req.url === "/health") {
+    return res.status(200).send("OK");
   }
-  const body = Buffer.concat(chunks);
-
-  const headers = {};
-  if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
-  if (req.headers['authorization']) headers['authorization'] = req.headers['authorization'];
 
   try {
+    const targetUrl = "https://groq.com" + req.url;
+
+    // Читаем сырое тело запроса (аудио или JSON)
+    const chunks = [];
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+    const bodyBuffer = chunks.length > 0 ? Buffer.concat(chunks) : undefined;
+
+    const headers = {
+      "Authorization": req.headers["authorization"] || "",
+    };
+    if (req.headers["content-type"]) {
+      headers["Content-Type"] = req.headers["content-type"];
+    }
+
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: headers,
-      body: req.method !== 'GET' && req.method !== 'HEAD' ? body : undefined,
+      body: req.method !== "GET" && req.method !== "HEAD" ? bodyBuffer : undefined,
     });
 
-    const data = await response.arrayBuffer();
-    res.status(response.status).send(Buffer.from(data));
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const data = await response.text();
+    res.status(response.status).setHeader("Content-Type", "application/json").send(data);
+  } catch (err) {
+    res.status(500).json({ proxy_error: err.message });
   }
 }
