@@ -1,18 +1,19 @@
 export const config = {
   api: {
-    bodyParser: false, // Отключаем парсер, чтобы аудиофайл (multipart) проходил без искажений
+    bodyParser: false,
   },
 };
 
 export default async function handler(req, res) {
-  if (req.url === "/health") {
+  const path = req.query.path || "/";
+
+  if (path === "/health") {
     return res.status(200).send("OK");
   }
 
   try {
-    const targetUrl = "https://groq.com" + req.url;
+    const targetUrl = "https://groq.com" + path;
 
-    // Читаем сырое тело запроса (аудио или JSON)
     const chunks = [];
     for await (const chunk of req) {
       chunks.push(chunk);
