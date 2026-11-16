@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const targetUrl = "https://groq.com" + cleanPath;
+    const targetUrl = "https://api.groq.com" + cleanPath;
 
     const chunks = [];
     for await (const chunk of req) {
