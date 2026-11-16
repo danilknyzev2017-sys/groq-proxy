@@ -5,14 +5,15 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  const path = req.query.path || "/";
+  // Извлекаем реальный путь без префикса /api
+  const cleanPath = req.url.replace(/^\/api/, "") || "/";
 
-  if (path === "/health") {
+  if (cleanPath === "/health") {
     return res.status(200).send("OK");
   }
 
   try {
-    const targetUrl = "https://groq.com" + path;
+    const targetUrl = "https://groq.com" + cleanPath;
 
     const chunks = [];
     for await (const chunk of req) {
